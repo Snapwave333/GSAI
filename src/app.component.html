@@ -1,0 +1,157 @@
+
+<div class="flex h-screen w-screen overflow-hidden bg-black text-white selection:bg-purple-500/30">
+  <!-- Sidebar -->
+  <app-sidebar></app-sidebar>
+
+  <!-- Main Content -->
+  <main class="flex-1 flex flex-col min-w-0">
+    
+    <!-- Topbar -->
+    <header class="h-16 border-b border-white/5 flex items-center justify-between px-6 bg-[#0a0a0a]">
+      <div class="flex items-center gap-4">
+        <h2 class="text-lg font-medium text-white">{{ state.activeView() }}</h2>
+        <div class="h-4 w-[1px] bg-white/10"></div>
+        <div class="flex items-center gap-2 text-xs">
+           <app-ui-badge [variant]="state.connectionState() === 'connected' ? 'success' : 'default'">
+             {{ state.connectionState() === 'connected' ? 'LIVE' : 'OFFLINE' }}
+           </app-ui-badge>
+        </div>
+      </div>
+      
+      <div class="flex items-center gap-6">
+        <!-- Phase Indicator -->
+        <div class="hidden md:flex flex-col items-end">
+           <span class="text-[10px] text-gray-500 uppercase tracking-widest">Current Phase</span>
+           <span class="text-xs font-bold text-blue-400">{{ state.projectPhase() }}</span>
+        </div>
+        
+        <div class="flex flex-col items-end">
+          <span class="text-[10px] text-gray-500 uppercase tracking-widest">Project Completion</span>
+          <div class="w-32 h-1.5 bg-gray-800 rounded-full mt-1 overflow-hidden">
+            <div class="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-1000" [style.width.%]="state.projectProgress()"></div>
+          </div>
+        </div>
+        <button class="p-2 hover:bg-white/5 rounded-full text-gray-400 transition-colors">
+          🔔
+        </button>
+      </div>
+    </header>
+
+    <!-- Dashboard Grid -->
+    <div class="flex-1 p-6 overflow-y-auto">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full max-h-[calc(100vh-8rem)]">
+        
+        <!-- Left Col: Visuals & Agents -->
+        <div class="lg:col-span-2 flex flex-col gap-6">
+          
+          <!-- Viewport/Stats Row -->
+          <div class="grid grid-cols-2 gap-6 h-64">
+            <app-glsl-view></app-glsl-view>
+            <div class="grid grid-cols-2 gap-4">
+              <!-- Stat Cards using shared UI component -->
+              <app-ui-card>
+                 <span class="text-xs text-gray-500 uppercase font-bold tracking-wider">Code Gen</span>
+                 <span class="text-2xl font-mono text-blue-400 mt-2 block">{{ state.metrics().codeGen | number }}</span>
+                 <div class="mt-auto pt-2 text-[10px] text-gray-400 flex items-center gap-1">
+                   <span class="w-1.5 h-1.5 rounded-full bg-gray-500"></span> Lines
+                 </div>
+              </app-ui-card>
+              
+              <app-ui-card>
+                 <span class="text-xs text-gray-500 uppercase font-bold tracking-wider">Assets</span>
+                 <span class="text-2xl font-mono text-purple-400 mt-2 block">{{ state.metrics().assetsBuilt | number }}</span>
+                 <div class="mt-auto pt-2 text-[10px] text-gray-400">Total count</div>
+              </app-ui-card>
+              
+              <app-ui-card>
+                 <span class="text-xs text-gray-500 uppercase font-bold tracking-wider">Bug Ratio</span>
+                 <span class="text-2xl font-mono text-red-400 mt-2 block">{{ state.metrics().bugRatio | number:'1.1-1' }}%</span>
+                 <div class="mt-auto pt-2 text-[10px] text-gray-400">Stable</div>
+              </app-ui-card>
+              
+              <app-ui-card>
+                 <span class="text-xs text-gray-500 uppercase font-bold tracking-wider">Load</span>
+                 <span class="text-2xl font-mono text-yellow-400 mt-2 block">{{ state.metrics().computeLoad }}%</span>
+                 <div class="mt-auto w-full bg-gray-800 h-1 rounded-full overflow-hidden">
+                    <div class="bg-yellow-400 h-full transition-all duration-500" [style.width.%]="state.metrics().computeLoad"></div>
+                 </div>
+              </app-ui-card>
+            </div>
+          </div>
+          
+          <!-- Charts Row -->
+          <div class="grid grid-cols-2 gap-6 h-40">
+            <app-ui-card>
+              <app-metrics-chart 
+                [data]="state.history()" 
+                dataKey="codeGen" 
+                title="Code Velocity"
+                color="#60a5fa"
+                type="area">
+              </app-metrics-chart>
+            </app-ui-card>
+            <app-ui-card>
+              <app-metrics-chart 
+                [data]="state.history()" 
+                dataKey="assets" 
+                title="Asset Production"
+                color="#c084fc"
+                type="bar">
+              </app-metrics-chart>
+            </app-ui-card>
+          </div>
+
+          <!-- Prompt Suggestions -->
+          <div>
+            <app-prompt-suggestions></app-prompt-suggestions>
+          </div>
+
+          <!-- Agents Grid -->
+          <div class="flex-1 overflow-y-auto min-h-[300px]">
+            <h3 class="text-sm font-medium text-gray-400 mb-4 flex items-center gap-2 sticky top-0 bg-black z-10 py-2">
+              <span class="text-white">ACTIVE SUBAGENTS</span>
+              <span class="h-[1px] flex-1 bg-white/5"></span>
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              @for (agent of state.agents(); track agent.id) {
+                <app-agent-card [agent]="agent"></app-agent-card>
+              }
+            </div>
+          </div>
+          
+        </div>
+
+        <!-- Right Col: Console/Timeline -->
+        <div class="flex flex-col gap-6 h-full">
+           <app-console-log class="flex-1 min-h-0"></app-console-log>
+           
+           <div class="h-1/3 min-h-[200px]">
+             <app-ui-card>
+                <h4 class="text-xs font-bold text-gray-400 mb-4 uppercase tracking-wider flex items-center gap-2">
+                  <span>⏱️</span> Project Timeline
+                </h4>
+                <div class="flex-1 relative border-l border-white/10 ml-2 space-y-6 overflow-y-auto pr-2 custom-scrollbar">
+                   <div class="relative pl-6">
+                      <div class="absolute -left-[5px] top-1 w-2.5 h-2.5 rounded-full bg-gray-700"></div>
+                      <div class="text-xs text-white font-medium">Phase 1: Validation</div>
+                      <div class="text-[10px] text-gray-500">Pending Input</div>
+                   </div>
+                   <div class="relative pl-6 opacity-30">
+                      <div class="absolute -left-[5px] top-1 w-2.5 h-2.5 rounded-full bg-gray-800"></div>
+                      <div class="text-xs text-white font-medium">Phase 2: Team Assembly</div>
+                      <div class="text-[10px] text-gray-500">Waiting</div>
+                   </div>
+                   <div class="relative pl-6 opacity-30">
+                      <div class="absolute -left-[5px] top-1 w-2.5 h-2.5 rounded-full bg-gray-800"></div>
+                      <div class="text-xs text-white font-medium">Phase 3: Parallel Dev</div>
+                      <div class="text-[10px] text-gray-500">Waiting</div>
+                   </div>
+                </div>
+             </app-ui-card>
+           </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+</div>

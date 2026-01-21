@@ -1,0 +1,5 @@
+{
+  "name": "GameStudio Subagents Dashboard",
+  "description": "A high-performance Angular dashboard for monitoring AI game development agents, featuring real-time GLSL visualization and Gemini-powered subagent intelligence.",
+  "requestFramePermissions": []
+}
